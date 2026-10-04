@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 11 15 23;
+    --panel: 19 26 38;
+    --accent: 34 211 238;
+    --warn: 245 158 11;
+    --danger: 248 113 113;
+    --success: 52 211 153;
+  }
+  body {
+    background-color: rgb(var(--bg));
+    color: #e2e8f0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+}
