@@ -24,6 +24,5 @@ ADAPTERS: dict[str, BaseAdapter] = {
     "linkedin": LinkedinAdapter(),
     "other": _OtherStub(),
 }
-ADAPTERS["manual"] = ADAPTERS["other"]
 
 __all__ = ["ADAPTERS"]
