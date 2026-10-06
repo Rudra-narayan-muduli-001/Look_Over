@@ -4,6 +4,9 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import optional_api_key
+from app.core.sanitize import sanitize_manual_snapshot
+from app.core.url_validator import validate_platform_url
 from app.db.session import get_db
 from app.models.person import Person
 from app.models.profile_link import PLATFORMS, ProfileLink
@@ -35,12 +38,13 @@ def validate_link(platform: str, url: str) -> str | None:
     platform = platform.strip().lower()
     if platform not in PLATFORMS:
         raise HTTPException(422, f"platform must be one of {list(PLATFORMS)}")
-    if platform not in _PATTERNS or not _PATTERNS[platform][0].match(url.strip()):
+    url = validate_platform_url(platform, url)
+    if platform not in _PATTERNS or not _PATTERNS[platform][0].match(url):
         raise HTTPException(422, f"URL does not look like a {platform} profile URL")
     return platform
 
 
-@router.post("/persons/{person_id}/links", response_model=LinkOut, status_code=201)
+@router.post("/persons/{person_id}/links", response_model=LinkOut, status_code=201, dependencies=[optional_api_key])
 async def add_link(person_id: int, body: LinkCreate, db: AsyncSession = Depends(get_db)):
     person = await db.get(Person, person_id)
     if person is None:
@@ -54,7 +58,7 @@ async def add_link(person_id: int, body: LinkCreate, db: AsyncSession = Depends(
     return link
 
 
-@router.delete("/links/{link_id}", status_code=204)
+@router.delete("/links/{link_id}", status_code=204, dependencies=[optional_api_key])
 async def delete_link(link_id: int, db: AsyncSession = Depends(get_db)):
     link = await db.get(ProfileLink, link_id)
     if link is None:
@@ -64,7 +68,7 @@ async def delete_link(link_id: int, db: AsyncSession = Depends(get_db)):
     return None
 
 
-@router.post("/links/{link_id}/manual-snapshot")
+@router.post("/links/{link_id}/manual-snapshot", dependencies=[optional_api_key])
 async def manual_snapshot(link_id: int, body: ManualSnapshotIn, db: AsyncSession = Depends(get_db)):
     link = await db.get(ProfileLink, link_id)
     if link is None:
@@ -72,7 +76,8 @@ async def manual_snapshot(link_id: int, body: ManualSnapshotIn, db: AsyncSession
     for p in body.posts:
         if not isinstance(p, dict) or "id" not in p:
             raise HTTPException(422, "each post needs an 'id'")
-    out = await process_link_snapshot(db, link.person_id, link, body.profile, body.posts, trigger="manual")
+    clean_profile, clean_posts = sanitize_manual_snapshot(body.profile, body.posts)
+    out = await process_link_snapshot(db, link.person_id, link, clean_profile, clean_posts, trigger="manual")
     await db.commit()
     await db.refresh(link)
     return out

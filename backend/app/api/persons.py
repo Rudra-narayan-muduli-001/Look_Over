@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import optional_api_key
 from app.core.scheduler import add_or_update_person_job, remove_person_job
 from app.db.session import get_db
 from app.models.person import Person
@@ -15,7 +16,7 @@ async def list_persons(db: AsyncSession = Depends(get_db)):
     return list((await db.execute(select(Person).order_by(Person.created_at.desc()))).scalars().all())
 
 
-@router.post("/persons", response_model=PersonOut, status_code=201)
+@router.post("/persons", response_model=PersonOut, status_code=201, dependencies=[optional_api_key])
 async def create_person(body: PersonCreate, db: AsyncSession = Depends(get_db)):
     person = Person(name=body.name.strip(), notes=body.notes)
     db.add(person)
@@ -36,7 +37,7 @@ async def get_person(person_id: int, db: AsyncSession = Depends(get_db)):
     return person
 
 
-@router.put("/persons/{person_id}", response_model=PersonOut)
+@router.put("/persons/{person_id}", response_model=PersonOut, dependencies=[optional_api_key])
 async def update_person(person_id: int, body: PersonUpdate, db: AsyncSession = Depends(get_db)):
     person = await db.get(Person, person_id)
     if person is None:
@@ -55,7 +56,7 @@ async def update_person(person_id: int, body: PersonUpdate, db: AsyncSession = D
     return person
 
 
-@router.delete("/persons/{person_id}", status_code=204)
+@router.delete("/persons/{person_id}", status_code=204, dependencies=[optional_api_key])
 async def delete_person(person_id: int, db: AsyncSession = Depends(get_db)):
     person = await db.get(Person, person_id)
     if person is None:
