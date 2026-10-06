@@ -9,3 +9,4 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{(DATA_DIR / 'dat
 DEFAULT_CHECK_INTERVAL_HOURS = int(os.getenv("CHECK_INTERVAL_HOURS", "6"))
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 CORS_ORIGINS = ["http://localhost:5173"]
+API_KEY = os.getenv("API_KEY", "")
