@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import alerts, checks, links, persons, timeline
 from app.core.config import CORS_ORIGINS
+from app.core.error_handlers import register_error_handlers
+from app.core.rate_limit import init_rate_limiter
 from app.db.session import init_db
 
 
@@ -30,11 +32,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Eyes on You", lifespan=lifespan)
 
+init_rate_limiter(app)
+register_error_handlers(app)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
