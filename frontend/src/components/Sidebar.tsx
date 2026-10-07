@@ -1,13 +1,18 @@
 import { NavLink } from 'react-router-dom';
+import { Badge, Text } from '@radix-ui/themes';
 
 export default function Sidebar({ unseen }: { unseen: number }) {
   const link = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${
-      isActive ? 'bg-[#22D3EE]/15 text-[#22D3EE]' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+    `flex items-center gap-2 rounded-[var(--radius-3)] px-3 py-2 text-sm font-medium transition-colors ${
+      isActive
+        ? 'bg-[var(--accent-a3)] text-[var(--accent-11)]'
+        : 'text-[var(--gray-11)] hover:bg-[var(--gray-a3)] hover:text-[var(--gray-12)]'
     }`;
   return (
-    <nav className="border-b border-white/10 bg-[#131A26] px-4 py-3 sm:w-60 sm:shrink-0 sm:border-b-0 sm:border-r sm:p-4">
-      <p className="mb-3 hidden text-lg font-bold text-slate-200 sm:block">Eyes on You</p>
+    <nav className="border-b border-[var(--gray-a5)] bg-[var(--color-panel-solid)] px-4 py-3 sm:w-60 sm:shrink-0 sm:border-b-0 sm:border-r sm:p-4">
+      <Text as="p" size="5" weight="bold" className="mb-3 hidden sm:block">
+        Eyes on You
+      </Text>
       <div className="flex gap-2 sm:flex-col">
         <NavLink to="/" end className={link}>
           Dashboard
@@ -15,9 +20,9 @@ export default function Sidebar({ unseen }: { unseen: number }) {
         <NavLink to="/alerts" className={link}>
           Alerts
           {unseen > 0 && (
-            <span className="rounded-full bg-[#22D3EE] px-2 py-0.5 text-[11px] font-bold text-[#0B0F17]">
+            <Badge color="cyan" variant="solid" radius="full" size="1">
               {unseen}
-            </span>
+            </Badge>
           )}
         </NavLink>
         <NavLink to="/new" className={link}>
