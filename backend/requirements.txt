@@ -8,6 +8,6 @@ beautifulsoup4
 apscheduler
 pytest
 pytest-asyncio
-httpx
+slowapi
 # NOTE: playwright plugs in here for JS-heavy adapters (x/instagram/facebook/linkedin).
 # Add when Playwright hardening lands (P6): `playwright` + `python -m playwright install chromium`.
