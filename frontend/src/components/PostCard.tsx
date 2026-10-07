@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { Badge, Card, Text } from '@radix-ui/themes';
 import type { Post } from '../lib/api';
 
 function media(post: Post): string[] {
@@ -16,20 +17,24 @@ export default function PostCard({ post }: { post: Post }) {
   const [open, setOpen] = useState(false);
   const thumbs = media(post);
   return (
-    <div className="rounded-xl border border-white/10 bg-[#131A26] p-3">
+    <Card size="2">
       <div className="flex items-center gap-2">
-        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-slate-200">
+        <Badge color="gray" variant="soft">
           {post.platform}
-        </span>
-        <span className="ml-auto text-xs text-slate-400">
+        </Badge>
+        <Text size="1" color="gray" className="ml-auto">
           {format(new Date(post.posted_at ?? post.first_seen_at), 'PPp')}
-        </span>
+        </Text>
       </div>
       {post.text ? (
         <button type="button" onClick={() => setOpen((o) => !o)} className="mt-2 block w-full text-left">
-          <p className={`whitespace-pre-wrap text-sm text-slate-200 ${open ? '' : 'line-clamp-4'}`}>
+          <Text
+            as="p"
+            size="2"
+            className={`whitespace-pre-wrap ${open ? '' : 'line-clamp-4'}`}
+          >
             {post.text}
-          </p>
+          </Text>
         </button>
       ) : null}
       {thumbs.length > 0 && (
@@ -39,7 +44,7 @@ export default function PostCard({ post }: { post: Post }) {
               key={src}
               src={src}
               alt=""
-              className="h-20 w-20 rounded-xl object-cover"
+              className="h-20 w-20 rounded-[var(--radius-3)] object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
@@ -47,6 +52,6 @@ export default function PostCard({ post }: { post: Post }) {
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

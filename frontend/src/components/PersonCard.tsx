@@ -1,13 +1,11 @@
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { Avatar, Badge, Button, Card, Link as RadixLink, Text } from '@radix-ui/themes';
 import type { Person } from '../lib/api';
 import StatusDot from './StatusDot';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 function initials(name: string) {
-    return name
+  return name
     .split(' ')
     .map((w) => w[0])
     .slice(0, 2)
@@ -32,46 +30,43 @@ export default function PersonCard({
     .sort()
     .pop();
   return (
-    <Card className="p-4">
+    <Card size="2">
       <div className="flex items-center gap-3">
-        {person.avatar_url ? (
-          <img
-            src={person.avatar_url}
-            alt={person.name}
-            className="h-11 w-11 rounded-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : null}
-        <div
-          aria-hidden={!!person.avatar_url}
-          className={`flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-slate-200 ${person.avatar_url ? 'hidden' : ''}`}
-        >
-          {initials(person.name)}
-        </div>
+        <Avatar
+          src={person.avatar_url ?? undefined}
+          fallback={initials(person.name)}
+          size="3"
+          radius="full"
+        />
         <div className="min-w-0 flex-1">
-          <Link to={`/persons/${person.id}`} className="truncate font-semibold hover:text-accent">
-            {person.name}
-          </Link>
+          <RadixLink asChild weight="medium" className="block truncate">
+            <Link to={`/persons/${person.id}`}>{person.name}</Link>
+          </RadixLink>
           <div className="mt-1 flex items-center gap-1.5">
             {person.links.map((l) => (
               <StatusDot key={l.id} status={l.last_status} />
             ))}
-            {person.links.length === 0 && <span className="text-xs text-slate-400">no links yet</span>}
+            {person.links.length === 0 && (
+              <Text size="1" color="gray">
+                no links yet
+              </Text>
+            )}
           </div>
         </div>
-        {unseen > 0 && <Badge>{unseen} new</Badge>}
+        {unseen > 0 && (
+          <Badge color="cyan" variant="solid" radius="full">
+            {unseen} new
+          </Badge>
+        )}
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-slate-400">
+        <Text size="1" color="gray">
           {last ? `checked ${formatDistanceToNow(new Date(last), { addSuffix: true })}` : 'never checked'}
-        </span>
-        <Button variant="secondary" size="sm" onClick={onCheck} disabled={checking}>
-          {checking ? 'Checking…' : 'Check now'}
+        </Text>
+        <Button variant="soft" size="1" loading={checking} disabled={checking} onClick={onCheck}>
+          Check now
         </Button>
       </div>
     </Card>
   );
 }
-
