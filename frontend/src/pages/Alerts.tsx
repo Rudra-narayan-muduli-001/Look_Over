@@ -1,26 +1,35 @@
+import { format } from 'date-fns';
+import { Link as RouterLink } from 'react-router-dom';
+import { Button, Card, Heading, Link as RadixLink, Skeleton, Text } from '@radix-ui/themes';
 import { useAlerts, useMarkSeen } from '../hooks/useAlerts';
 import DiffBadge from '../components/DiffBadge';
 import EmptyState from '../components/EmptyState';
-import { format } from 'date-fns';
-import { Link } from 'react-router-dom';
 
 export default function Alerts() {
   const alerts = useAlerts();
   const { markOne, markAll } = useMarkSeen();
 
-  if (alerts.isPending) return <p className="text-slate-400">Loading alerts…</p>;
+  if (alerts.isPending)
+    return (
+      <div className="mx-auto max-w-2xl space-y-3">
+        <Heading size="5">Alerts</Heading>
+        {[0, 1, 2].map((i) => (
+          <Card key={i} size="2">
+            <Skeleton width="140px" height="14px" />
+            <Skeleton width="80%" height="12px" />
+          </Card>
+        ))}
+      </div>
+    );
   if (alerts.isError)
     return (
       <EmptyState
         title="Couldn't load alerts"
+        tone="danger"
         action={
-          <button
-            type="button"
-            onClick={() => alerts.refetch()}
-            className="rounded-xl bg-[#22D3EE]/15 px-4 py-2 text-sm font-semibold text-[#22D3EE]"
-          >
+          <Button variant="soft" onClick={() => alerts.refetch()}>
             Retry
-          </button>
+          </Button>
         }
       />
     );
@@ -28,16 +37,17 @@ export default function Alerts() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-4 flex items-center">
-        <h1 className="text-xl font-bold text-slate-200">Alerts</h1>
+        <Heading size="5">Alerts</Heading>
         {alerts.data.length > 0 && (
-          <button
-            type="button"
-            onClick={() => markAll.mutate(undefined)}
+          <Button
+            variant="surface"
+            size="1"
+            className="ml-auto"
             disabled={markAll.isPending}
-            className="ml-auto rounded-xl border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-50"
+            onClick={() => markAll.mutate(undefined)}
           >
             {markAll.isPending ? 'Marking…' : 'Mark all seen'}
-          </button>
+          </Button>
         )}
       </div>
       {alerts.data.length === 0 ? (
@@ -45,26 +55,30 @@ export default function Alerts() {
       ) : (
         <div className="space-y-3">
           {alerts.data.map((c) => (
-            <div key={c.id} className="rounded-xl border border-[#22D3EE]/40 bg-[#131A26] p-3 ring-1 ring-[#22D3EE]/30">
+            <Card key={c.id} size="2" className="border-[var(--cyan-a6)] bg-[var(--cyan-a2)]">
               <div className="flex items-center gap-2">
                 <DiffBadge type={c.type} field={c.field} />
-                <Link to={`/persons/${c.person_id}`} className="text-xs text-[#22D3EE] hover:underline">
-                  person #{c.person_id}
-                </Link>
-                <span className="ml-auto text-xs text-slate-400">
+                <RadixLink asChild size="1">
+                  <RouterLink to={`/persons/${c.person_id}`}>person #{c.person_id}</RouterLink>
+                </RadixLink>
+                <Text size="1" color="gray" className="ml-auto">
                   {format(new Date(c.detected_at), 'PPp')}
-                </span>
+                </Text>
               </div>
-              <p className="mt-2 text-sm text-slate-200">{c.new_value ?? c.type}</p>
-              <button
-                type="button"
-                onClick={() => markOne.mutate(c.id)}
+              <Text as="p" size="2" mt="2">
+                {c.new_value ?? c.type}
+              </Text>
+              <Button
+                variant="ghost"
+                size="1"
+                color="cyan"
+                mt="2"
                 disabled={markOne.isPending}
-                className="mt-2 text-xs font-medium text-[#22D3EE] hover:underline disabled:opacity-50"
+                onClick={() => markOne.mutate(c.id)}
               >
                 Mark seen
-              </button>
-            </div>
+              </Button>
+            </Card>
           ))}
         </div>
       )}

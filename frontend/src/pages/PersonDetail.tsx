@@ -2,6 +2,22 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  Button,
+  Callout,
+  Card,
+  Code,
+  Dialog,
+  Heading,
+  Select,
+  Skeleton,
+  Table,
+  Tabs,
+  Text,
+  TextArea,
+  TextField,
+} from '@radix-ui/themes';
 import { usePerson } from '../hooks/usePerson';
 import { useTimeline } from '../hooks/useTimeline';
 import { usePosts } from '../hooks/usePosts';
@@ -20,18 +36,6 @@ import PostCard from '../components/PostCard';
 import DiffBadge from '../components/DiffBadge';
 import CheckNowButton from '../components/CheckNowButton';
 import EmptyState from '../components/EmptyState';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const BLOCKED = new Set(['blocked', 'needs_login', 'rate_limited']);
 const PLATFORMS = ['github', 'x', 'instagram', 'facebook', 'linkedin', 'other'] as Platform[];
@@ -71,32 +75,38 @@ function ManualPasteDialog({
     }
   };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Manual snapshot — {link?.platform}</DialogTitle>
-          <DialogDescription>
-            Paste <code>{'{"profile": {...}, "posts": [...]}'}</code>; it goes through the same diff pipeline.
-          </DialogDescription>
-        </DialogHeader>
-        <textarea
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content maxWidth="600px">
+        <Dialog.Title>Manual snapshot: {link?.platform}</Dialog.Title>
+        <Dialog.Description size="2">
+          Paste <Code>{'{"profile": {...}, "posts": [...]}'}</Code>; it goes through the same diff
+          pipeline.
+        </Dialog.Description>
+        <TextArea
+          mt="3"
+          rows={8}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          rows={8}
           placeholder='{"profile": {"display_name": "…", "bio": "…"}, "posts": []}'
-          className="mt-3 w-full rounded-xl border border-white/10 bg-[#0B0F17] px-3 py-2 font-mono text-xs text-slate-200"
+          style={{ fontFamily: 'var(--code-font-family)' }}
         />
-        {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+        {error && (
+          <Callout.Root color="red" variant="soft" mt="2">
+            <Callout.Text>{error}</Callout.Text>
+          </Callout.Root>
+        )}
         <div className="mt-3 flex gap-2">
-          <Button onClick={submit} disabled={busy}>
-            {busy ? 'Saving…' : 'Submit snapshot'}
+          <Button loading={busy} disabled={busy} onClick={submit}>
+            Submit snapshot
           </Button>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+          <Dialog.Close>
+            <Button variant="ghost" color="gray">
+              Cancel
+            </Button>
+          </Dialog.Close>
         </div>
-      </DialogContent>
-    </Dialog>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -113,48 +123,58 @@ function SettingsTab({ personId, links }: { personId: number; links: ProfileLink
     qc.invalidateQueries({ queryKey: ['person', personId] });
     qc.invalidateQueries({ queryKey: ['persons'] });
   };
+  const removePerson = async () => {
+    await deletePerson(personId);
+    qc.invalidateQueries({ queryKey: ['persons'] });
+    nav('/');
+  };
   return (
     <div className="space-y-4">
-      {msg && <p className="text-sm text-danger">{msg}</p>}
-      <Card>
-        <CardContent className="space-y-2 p-4">
-          <h2 className="text-sm font-semibold">Profile</h2>
-          <Input
+      {msg && (
+        <Callout.Root color="red" variant="soft">
+          <Callout.Text>{msg}</Callout.Text>
+        </Callout.Root>
+      )}
+      <Card size="3">
+        <div className="space-y-2">
+          <Heading size="3">Profile</Heading>
+          <TextField.Root
+            aria-label="name"
             value={name ?? person.data?.name ?? ''}
             onChange={(e) => setName(e.target.value)}
-            aria-label="name"
           />
-          <textarea
+          <TextArea
+            aria-label="notes"
+            rows={2}
             value={notes ?? person.data?.notes ?? ''}
             onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            aria-label="notes"
-            className="w-full rounded-xl border border-white/10 bg-[#0B0F17] px-3 py-2 text-sm text-slate-200"
           />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={async () => {
-              try {
-                await updatePerson(personId, {
-                  ...(name != null ? { name } : {}),
-                  ...(notes != null ? { notes } : {}),
-                });
-                setName(null);
-                setNotes(null);
-                refresh();
-              } catch {
-                setMsg('Save failed.');
-              }
-            }}
-          >
-            Save
-          </Button>
-        </CardContent>
+          <div>
+            <Button
+              variant="soft"
+              size="2"
+              onClick={async () => {
+                try {
+                  await updatePerson(personId, {
+                    ...(name != null ? { name } : {}),
+                    ...(notes != null ? { notes } : {}),
+                  });
+                  setName(null);
+                  setNotes(null);
+                  refresh();
+                } catch {
+                  setMsg('Save failed.');
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
       </Card>
-      <Card>
-        <CardContent className="space-y-2 p-4">
-          <h2 className="text-sm font-semibold">Links</h2>
+      <Card size="3">
+        <div className="space-y-2">
+          <Heading size="3">Links</Heading>
           {links.map((l) => (
             <div key={l.id} className="flex items-center gap-2">
               <div className="flex-1">
@@ -162,34 +182,37 @@ function SettingsTab({ personId, links }: { personId: number; links: ProfileLink
               </div>
               <Button
                 variant="ghost"
-                size="icon"
+                color="gray"
+                aria-label={`delete ${l.platform} link`}
                 onClick={async () => {
                   await deleteLink(l.id);
                   refresh();
                 }}
-                aria-label={`delete ${l.platform} link`}
               >
                 ✕
               </Button>
             </div>
           ))}
           <div className="flex gap-2">
-            <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+            <Select.Root value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+              <Select.Trigger className="w-36" />
+              <Select.Content>
                 {PLATFORMS.map((p) => (
-                  <SelectItem key={p} value={p}>
+                  <Select.Item key={p} value={p}>
                     {p}
-                  </SelectItem>
+                  </Select.Item>
                 ))}
-              </SelectContent>
-            </Select>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
+              </Select.Content>
+            </Select.Root>
+            <TextField.Root
+              className="flex-1"
+              placeholder="https://…"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
             <Button
-              variant="secondary"
-              size="sm"
+              variant="soft"
+              size="2"
               onClick={async () => {
                 if (!url.trim()) return;
                 try {
@@ -204,19 +227,33 @@ function SettingsTab({ personId, links }: { personId: number; links: ProfileLink
               Add
             </Button>
           </div>
-        </CardContent>
+        </div>
       </Card>
-      <Button
-        variant="destructive"
-        onClick={async () => {
-          if (!window.confirm(`Delete ${person.data?.name}?`)) return;
-          await deletePerson(personId);
-          qc.invalidateQueries({ queryKey: ['persons'] });
-          nav('/');
-        }}
-      >
-        Delete person
-      </Button>
+      <AlertDialog.Root>
+        <AlertDialog.Trigger>
+          <Button color="red" variant="soft">
+            Delete person
+          </Button>
+        </AlertDialog.Trigger>
+        <AlertDialog.Content maxWidth="450px">
+          <AlertDialog.Title>Delete {person.data?.name}?</AlertDialog.Title>
+          <AlertDialog.Description size="2">
+            This removes their links, snapshots, posts and changes. It cannot be undone.
+          </AlertDialog.Description>
+          <div className="mt-4 flex justify-end gap-3">
+            <AlertDialog.Cancel>
+              <Button variant="soft" color="gray">
+                Cancel
+              </Button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action>
+              <Button color="red" onClick={removePerson}>
+                Delete
+              </Button>
+            </AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
     </div>
   );
 }
@@ -230,7 +267,13 @@ export default function PersonDetail() {
   const posts = usePosts(id);
   const { markOne } = useMarkSeen();
 
-  if (person.isPending) return <p className="text-slate-400">Loading…</p>;
+  if (person.isPending)
+    return (
+      <div className="space-y-3">
+        <Skeleton width="200px" height="28px" />
+        <Skeleton width="100%" height="320px" />
+      </div>
+    );
   if (person.isError || !person.data) return <EmptyState title="Person not found" />;
 
   const p = person.data;
@@ -246,73 +289,105 @@ export default function PersonDetail() {
   return (
     <div>
       <div className="flex items-center gap-3">
-        <h1 className="text-xl font-bold">{p.name}</h1>
+        <Heading size="5">{p.name}</Heading>
         <CheckNowButton personId={id} />
       </div>
-      {p.notes && <p className="mt-1 text-sm text-slate-400">{p.notes}</p>}
+      {p.notes && (
+        <Text as="p" size="2" color="gray" mt="1">
+          {p.notes}
+        </Text>
+      )}
 
-      <Tabs value={tab} onValueChange={setTab} className="mt-4">
-        <TabsList>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="checks">Checks</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
+      <Tabs.Root value={tab} onValueChange={setTab} mt="4">
+        <Tabs.List>
+          <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
+          <Tabs.Trigger value="posts">Posts</Tabs.Trigger>
+          <Tabs.Trigger value="checks">Checks</Tabs.Trigger>
+          <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
+        </Tabs.List>
 
-        <TabsContent value="timeline">
+        <Tabs.Content value="timeline">
           <div className="space-y-3">
-            {timeline.isPending && <p className="text-slate-400">Loading timeline…</p>}
+            {timeline.isPending && (
+              <>
+                <Skeleton width="100%" height="76px" />
+                <Skeleton width="100%" height="76px" />
+              </>
+            )}
             {timeline.data && changes.length === 0 && snapshots.length > 0 && (
-              <EmptyState title="Baseline captured" hint="No diffs yet — later checks will list changes here." />
+              <EmptyState
+                title="Baseline captured"
+                hint="No diffs yet. Later checks will list changes here."
+              />
             )}
             {timeline.data && snapshots.length === 0 && (
               <EmptyState title="No checks yet" hint="Run a check to capture the baseline." />
             )}
             {changes.map((c) => (
-              <TimelineItem key={c.id} change={c} marking={markOne.isPending} onSeen={() => markOne.mutate(c.id)} />
+              <TimelineItem
+                key={c.id}
+                change={c}
+                marking={markOne.isPending}
+                onSeen={() => markOne.mutate(c.id)}
+              />
             ))}
           </div>
-        </TabsContent>
+        </Tabs.Content>
 
-        <TabsContent value="posts">
+        <Tabs.Content value="posts">
           <div className="space-y-3">
-            {posts.isPending && <p className="text-slate-400">Loading posts…</p>}
+            {posts.isPending && (
+              <>
+                <Skeleton width="100%" height="96px" />
+                <Skeleton width="100%" height="96px" />
+              </>
+            )}
             {posts.data?.length === 0 && <EmptyState title="No posts yet" />}
             {posts.data?.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
-        </TabsContent>
+        </Tabs.Content>
 
-        <TabsContent value="checks">
+        <Tabs.Content value="checks">
           <div className="space-y-3">
             {baseline && (
-              <Card className="border-success/40">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2">
-                    <DiffBadge type="field_change" field="baseline" />
-                    <span className="ml-auto text-xs text-slate-400">
-                      {format(new Date(baseline.taken_at), 'PPpp')} · {baseline.trigger}
-                    </span>
-                  </div>
-                  <p className="mt-2 font-mono text-xs text-slate-400">hash {baseline.hash.slice(0, 16)}…</p>
-                </CardContent>
+              <Card size="2" className="border-[var(--green-a6)]">
+                <div className="flex items-center gap-2">
+                  <DiffBadge type="field_change" field="baseline" />
+                  <Text size="1" color="gray" className="ml-auto">
+                    {format(new Date(baseline.taken_at), 'PPpp')} · {baseline.trigger}
+                  </Text>
+                </div>
+                <Code mt="2" size="1" variant="ghost">
+                  hash {baseline.hash.slice(0, 16)}…
+                </Code>
               </Card>
             )}
-            {snapshots
-              .filter((s) => s !== baseline)
-              .map((s) => (
-                <Card key={s.id}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span>{s.platform}</span>
-                      <span className="ml-auto text-xs text-slate-400">
-                        {format(new Date(s.taken_at), 'PPpp')} · {s.trigger}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            {snapshots.filter((s) => s !== baseline).length > 0 && (
+              <Card size="2">
+                <Table.Root size="1" variant="ghost">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeaderCell>platform</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>trigger</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>taken</Table.ColumnHeaderCell>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {snapshots
+                      .filter((s) => s !== baseline)
+                      .map((s) => (
+                        <Table.Row key={s.id}>
+                          <Table.Cell>{s.platform}</Table.Cell>
+                          <Table.Cell>{s.trigger}</Table.Cell>
+                          <Table.Cell>{format(new Date(s.taken_at), 'PPpp')}</Table.Cell>
+                        </Table.Row>
+                      ))}
+                  </Table.Body>
+                </Table.Root>
+              </Card>
+            )}
             <div className="space-y-2">
               {p.links.map((l) => (
                 <LinkRow key={l.id} link={l} />
@@ -321,11 +396,18 @@ export default function PersonDetail() {
             {blockedLinks.length > 0 && (
               <EmptyState
                 title="A platform needs attention"
-                hint="Blocked or login-walled — paste a snapshot manually."
+                hint="Blocked or login-walled. Paste a snapshot manually."
+                tone="warn"
                 action={
                   <div className="flex justify-center gap-2">
                     {blockedLinks.map((l) => (
-                      <Button key={l.id} variant="warn" size="sm" onClick={() => setPasteFor(l)}>
+                      <Button
+                        key={l.id}
+                        color="amber"
+                        variant="soft"
+                        size="2"
+                        onClick={() => setPasteFor(l)}
+                      >
                         Paste for {l.platform}
                       </Button>
                     ))}
@@ -334,14 +416,18 @@ export default function PersonDetail() {
               />
             )}
           </div>
-        </TabsContent>
+        </Tabs.Content>
 
-        <TabsContent value="settings">
+        <Tabs.Content value="settings">
           <SettingsTab personId={id} links={p.links} />
-        </TabsContent>
-      </Tabs>
+        </Tabs.Content>
+      </Tabs.Root>
 
-      <ManualPasteDialog link={pasteFor} open={pasteFor != null} onOpenChange={(open) => !open && setPasteFor(null)} />
+      <ManualPasteDialog
+        link={pasteFor}
+        open={pasteFor != null}
+        onOpenChange={(open) => !open && setPasteFor(null)}
+      />
     </div>
   );
 }
