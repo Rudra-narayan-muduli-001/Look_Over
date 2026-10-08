@@ -5,7 +5,7 @@ Single-user local tracker. Add a person + their social links, take a baseline sn
 ## 1. Stack
 
 - Backend: Python 3.11+ (verified 3.12), FastAPI, SQLAlchemy 2.0, SQLite (aiosqlite), APScheduler, httpx, BeautifulSoup4, Playwright (JS-heavy sites only), Pydantic v2, pytest
-- Frontend: Vite + React 18 + TS, Tailwind, React Router, TanStack Query, Axios, date-fns
+- Frontend: Vite + React 19 + TS, Radix Themes, Tailwind (layout), React Router, TanStack Query, Axios, date-fns
 - No auth (localhost). No Docker/Redis/Postgres in v1 (ponytail: add when single-user SQLite measurably falls short).
 
 ## 2. Repo layout
