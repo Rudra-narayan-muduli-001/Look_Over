@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Button, Skeleton } from '@radix-ui/themes';
 import { health } from './lib/api';
 import { useAlerts } from './hooks/useAlerts';
 import Sidebar from './components/Sidebar';
@@ -13,7 +14,7 @@ function Shell() {
   const alerts = useAlerts();
   const total = alerts.data?.length ?? 0;
   return (
-    <div className="flex min-h-screen flex-col bg-[#0B0F17] sm:flex-row">
+    <div className="flex min-h-[100dvh] flex-col sm:flex-row">
       <Sidebar unseen={total} />
       <main className="flex-1 p-4 sm:p-6">
         <Routes>
@@ -36,23 +37,21 @@ export default function App() {
     refetchInterval: 60_000,
   });
 
-  if (gate.isPending) return <p className="p-8 text-slate-400">Connecting to API…</p>;
+  if (gate.isPending)
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center p-4">
+        <Skeleton width="220px" height="44px" />
+      </div>
+    );
   if (gate.isError && !gate.data)
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0B0F17] p-4">
+      <div className="flex min-h-[100dvh] items-center justify-center p-4">
         <div className="w-full max-w-md">
           <EmptyState
             title="API is down"
             hint="Start the backend on http://localhost:8000, then retry."
-            action={
-              <button
-                type="button"
-                onClick={() => gate.refetch()}
-                className="rounded-xl bg-[#22D3EE] px-4 py-2 text-sm font-bold text-[#0B0F17]"
-              >
-                Retry
-              </button>
-            }
+            tone="danger"
+            action={<Button onClick={() => gate.refetch()}>Retry</Button>}
           />
         </div>
       </div>
