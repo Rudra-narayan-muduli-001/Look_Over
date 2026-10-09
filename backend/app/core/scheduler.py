@@ -1,12 +1,10 @@
 import logging
-import random
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import select
 
 scheduler = AsyncIOScheduler()
-_started = False
 
 
 async def _run_person_job(person_id: int):
@@ -33,8 +31,8 @@ def add_or_update_person_job(person_id: int, interval_hours: int) -> None:
 def remove_person_job(person_id: int) -> None:
     try:
         scheduler.remove_job(f"person-{person_id}")
-    except Exception:
-        pass
+    except Exception as e:
+        logging.warning("remove job failed for person %s: %s", person_id, e)
 
 
 async def schedule_all() -> None:
@@ -46,24 +44,19 @@ async def schedule_all() -> None:
     for p in persons:
         try:
             add_or_update_person_job(p.id, p.check_interval_hours or 6)
-        except Exception:
-            logging.exception("schedule failed for person %s", p.id)
+        except Exception as e:
+            logging.warning("schedule failed for person %s: %s", p.id, e)
 
 
 def start() -> None:
-    global _started
-    if _started:
+    if scheduler.running:
         return
-    if not scheduler.running:
-        # randomize first run so all persons don't fire at boot
-        for job in scheduler.get_jobs():
-            job.trigger.jitter = 600
-        scheduler.start()
-    _started = True
+    # randomize first run so all persons don't fire at boot
+    for job in scheduler.get_jobs():
+        job.trigger.jitter = 600
+    scheduler.start()
 
 
 def shutdown() -> None:
-    global _started
     if scheduler.running:
         scheduler.shutdown(wait=False)
-    _started = False
