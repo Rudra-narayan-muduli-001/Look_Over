@@ -1,47 +1,17 @@
-import re
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import optional_api_key
 from app.core.sanitize import sanitize_manual_snapshot
-from app.core.url_validator import validate_platform_url
+from app.core.url_validator import extract_handle, validate_link
 from app.db.session import get_db
 from app.models.person import Person
-from app.models.profile_link import PLATFORMS, ProfileLink
+from app.models.profile_link import ProfileLink
 from app.schemas.link import LinkCreate, LinkOut
 from app.schemas.manual import ManualSnapshotIn
 from app.services.snapshot_service import process_link_snapshot
 
 router = APIRouter(tags=["links"])
-
-_PATTERNS: dict[str, tuple[re.Pattern, int | None]] = {
-    "github": (re.compile(r"^https?://(www\.)?github\.com/([A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?)/?\s*$", re.I), 2),
-    "x": (re.compile(r"^https?://(www\.)?(x\.com|twitter\.com)/([A-Za-z0-9_]{1,15})/?\s*$", re.I), 3),
-    "instagram": (re.compile(r"^https?://(www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?\s*$", re.I), 2),
-    "facebook": (re.compile(r"^https?://(www\.)?facebook\.com/([A-Za-z0-9._-]+)/?\s*$", re.I), 2),
-    "linkedin": (re.compile(r"^https?://(www\.)?linkedin\.com/in/([A-Za-z0-9_%-]+)/?\s*$", re.I), 2),
-    "other": (re.compile(r"^https?://.+\..+", re.I), None),
-}
-
-
-def extract_handle(platform: str, url: str) -> str | None:
-    pat, group = _PATTERNS[platform]
-    m = pat.match(url.strip())
-    if not m:
-        return None
-    return m.group(group) if group else None
-
-
-def validate_link(platform: str, url: str) -> str | None:
-    platform = platform.strip().lower()
-    if platform not in PLATFORMS:
-        raise HTTPException(422, f"platform must be one of {list(PLATFORMS)}")
-    url = validate_platform_url(platform, url)
-    if platform not in _PATTERNS or not _PATTERNS[platform][0].match(url):
-        raise HTTPException(422, f"URL does not look like a {platform} profile URL")
-    return platform
 
 
 @router.post("/persons/{person_id}/links", response_model=LinkOut, status_code=201, dependencies=[optional_api_key])
