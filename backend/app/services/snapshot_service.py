@@ -1,6 +1,6 @@
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,12 +12,12 @@ from app.models.post import Post
 from app.models.profile_link import ProfileLink
 from app.models.snapshot import Snapshot
 from app.scrapers.manual import normalize_snapshot
-from app.services.diff_engine import DiffEngine
+from app.services.diff_engine import compare as diff_compare
 
 
 def _canonical_hash(profile: dict, posts: list[dict]) -> str:
-    blob = json.dumps({"profile": profile, "posts": posts}, sort_keys=True, default=str)
-    return hashlib.sha256(blob.encode()).hexdigest()
+    blob = json.dumps({"profile": profile, "posts": posts}, separators=(",", ":"), default=str)
+    return hashlib.md5(blob.encode()).hexdigest()
 
 
 def _parse_dt(value) -> datetime | None:
@@ -50,8 +50,8 @@ async def process_link_snapshot(
             await db.execute(select(Post.external_id).where(Post.link_id == link.id))
         ).scalars().all()
     )
-    changes = DiffEngine.compare(prev_profile, profile, prev_ids, posts)
-    now = datetime.utcnow()
+    changes = diff_compare(prev_profile, profile, prev_ids, posts)
+    now = datetime.now(timezone.utc)
     snap = Snapshot(
         person_id=person_id,
         link_id=link.id,
@@ -63,9 +63,10 @@ async def process_link_snapshot(
     )
     db.add(snap)
     new_post_ids = {c["new_value"] for c in changes if c["type"] == "new_post"}
-    by_id = {p["id"]: p for p in posts}
-    # Baseline records all posts as seen (emits no changes); later runs add only new ones.
-    to_insert = list(posts) if prev is None else [by_id[pid] for pid in new_post_ids if pid in by_id]
+    if prev is None:
+        to_insert = posts
+    else:
+        to_insert = [p for p in posts if p["id"] in new_post_ids]
     for p in to_insert:
         db.add(
             Post(
@@ -106,7 +107,7 @@ async def run_person_check(person_id: int, trigger: str, db: AsyncSession) -> Ch
     if person is None:
         raise LookupError(f"person {person_id} not found")
     links = (await db.execute(select(ProfileLink).where(ProfileLink.person_id == person_id))).scalars().all()
-    started = datetime.utcnow()
+    started = datetime.now(timezone.utc)
     results: list[dict] = []
     ok_any, fail_any = False, False
     for link in links:
@@ -126,7 +127,7 @@ async def run_person_check(person_id: int, trigger: str, db: AsyncSession) -> Ch
             err = res.error
         if res is None or res.status != "ok":
             link.last_status = (res.status if res else "error")
-            link.last_checked_at = datetime.utcnow()
+            link.last_checked_at = datetime.now(timezone.utc)
             results.append({"link_id": link.id, "platform": link.platform,
                             "status": link.last_status, "error": err})
             fail_any = True
@@ -143,12 +144,12 @@ async def run_person_check(person_id: int, trigger: str, db: AsyncSession) -> Ch
     person_snap = Snapshot(
         person_id=person_id, link_id=None, platform="aggregate",
         raw_json=json.dumps({"results": results}, default=str),
-        hash=hashlib.sha256(json.dumps(results, sort_keys=True, default=str).encode()).hexdigest(),
-        taken_at=datetime.utcnow(), trigger=trigger,
+        hash=_canonical_hash({"results": results}, []),
+        taken_at=datetime.now(timezone.utc), trigger=trigger,
     )
     db.add(person_snap)
     status = "partial" if (ok_any and fail_any) or (fail_any and not ok_any and links) else "ok"
-    run = CheckRun(person_id=person_id, started_at=started, finished_at=datetime.utcnow(),
+    run = CheckRun(person_id=person_id, started_at=started, finished_at=datetime.now(timezone.utc),
                    status=status, per_link_results=json.dumps(results, default=str))
     db.add(run)
     await db.commit()
