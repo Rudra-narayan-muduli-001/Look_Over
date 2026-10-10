@@ -15,8 +15,11 @@ function Shell() {
   const total = alerts.data?.length ?? 0;
   return (
     <div className="flex min-h-[100dvh] flex-col sm:flex-row">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--accent-9)] focus:text-[var(--accent-11)] focus:rounded-[var(--radius-3)]">
+        Skip to main content
+      </a>
       <Sidebar unseen={total} />
-      <main className="flex-1 p-4 sm:p-6">
+      <main id="main-content" className="flex-1 p-4 sm:p-6">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/persons/:id" element={<PersonDetail />} />

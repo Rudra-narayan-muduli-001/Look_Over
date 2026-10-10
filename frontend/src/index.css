@@ -10,3 +10,67 @@ body {
   /* Matches Radix dark slate-1 (--color-background); avoids overscroll flash. */
   background-color: #111113;
 }
+
+/* Focus visible styles for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse users, keep for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Ensure scroll padding for fixed header (focus not obscured) */
+html {
+  scroll-padding-top: 5rem;
+}
+
+/* Better text selection contrast */
+::selection {
+  background-color: var(--accent-a3);
+  color: var(--accent-11);
+}
+
+/* Focus styles for Radix components */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
+/* Skip link styles */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  background: var(--accent-9);
+  color: var(--accent-11);
+  border-radius: var(--radius-3);
+  z-index: 100;
+  text-decoration: none;
+  font-weight: 500;
+}
+.skip-link:focus {
+  top: 1rem;
+}
