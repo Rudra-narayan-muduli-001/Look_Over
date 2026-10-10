@@ -1,15 +1,24 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { Button, Card, Heading, Skeleton, Text } from '@radix-ui/themes';
 import { usePersons } from '../hooks/usePersons';
 import { useUnseenCounts } from '../hooks/useAlerts';
 import { useCheckNow } from '../hooks/useCheckNow';
 import PersonCard from '../components/PersonCard';
 import EmptyState from '../components/EmptyState';
+import { staggerEntrance } from '../lib/animations';
 
 export default function Dashboard() {
   const persons = usePersons();
   const unseen = useUnseenCounts();
   const check = useCheckNow();
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (persons.data.length > 0 && gridRef.current) {
+      staggerEntrance('.person-card', { stagger: 0.04, y: 12 });
+    }
+  }, [persons.data]);
 
   if (persons.isPending)
     return (
@@ -63,7 +72,7 @@ export default function Dashboard() {
   return (
     <div>
       <Heading size="5" mb="4">Dashboard</Heading>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3" ref={gridRef}>
         {persons.data.map((p) => (
           <PersonCard
             key={p.id}

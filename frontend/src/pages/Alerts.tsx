@@ -1,13 +1,22 @@
 import { format } from 'date-fns';
 import { Link as RouterLink } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { Button, Card, Heading, Link as RadixLink, Skeleton, Text } from '@radix-ui/themes';
 import { useAlerts, useMarkSeen } from '../hooks/useAlerts';
 import DiffBadge from '../components/DiffBadge';
 import EmptyState from '../components/EmptyState';
+import { staggerEntrance } from '../lib/animations';
 
 export default function Alerts() {
   const alerts = useAlerts();
   const { markOne, markAll } = useMarkSeen();
+  const alertsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (alerts.data && alertsRef.current) {
+      staggerEntrance('.alert-item', { stagger: 0.04, y: 8 });
+    }
+  }, [alerts.data]);
 
   if (alerts.isPending)
     return (
@@ -53,9 +62,9 @@ export default function Alerts() {
       {alerts.data.length === 0 ? (
         <EmptyState title="All caught up" hint="New changes from scheduled or manual checks will appear here." />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" ref={alertsRef}>
           {alerts.data.map((c) => (
-            <Card key={c.id} size="2" className="border-[var(--cyan-a6)] bg-[var(--cyan-a2)]">
+            <Card key={c.id} size="2" className="border-[var(--cyan-a6)] bg-[var(--cyan-a2)] alert-item">
               <div className="flex items-center gap-2">
                 <DiffBadge type={c.type} field={c.field} />
                 <RadixLink asChild size="1">

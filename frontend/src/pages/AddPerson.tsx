@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -12,10 +12,12 @@ import {
 } from '@radix-ui/themes';
 import { addLink, checkPerson, createPerson } from '../lib/api';
 import type { Platform } from '../lib/api';
+import { staggerEntrance } from '../lib/animations';
 
 const PLATFORMS: Platform[] = ['github', 'x', 'instagram', 'facebook', 'linkedin', 'other'];
 
 export default function AddPerson() {
+  const rowsContainerRef = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -26,6 +28,12 @@ export default function AddPerson() {
   const [personId, setPersonId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (step === 2 && rowsContainerRef.current) {
+      staggerEntrance('.link-row', { stagger: 0.05, y: 8 });
+    }
+  }, [rows, step]);
 
   const create = async () => {
     if (!name.trim()) {
@@ -83,12 +91,15 @@ export default function AddPerson() {
               placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              aria-label="Person name"
+              required
             />
             <TextArea
               placeholder="Notes (optional)"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              aria-label="Notes"
             />
             <div>
               <Button loading={busy} disabled={busy} onClick={create}>
@@ -99,9 +110,9 @@ export default function AddPerson() {
         </Card>
       ) : (
         <Card size="3">
-          <div className="space-y-3">
+          <div className="space-y-3" ref={rowsContainerRef}>
             {rows.map((r, i) => (
-              <div key={i} className="flex gap-2">
+              <div key={i} className="flex gap-2 link-row">
                 <Select.Root
                   value={r.platform}
                   onValueChange={(v) =>
@@ -109,6 +120,7 @@ export default function AddPerson() {
                       rs.map((x, j) => (j === i ? { ...x, platform: v as Platform } : x))
                     )
                   }
+                  aria-label={`Platform for link ${i + 1}`}
                 >
                   <Select.Trigger className="w-36" />
                   <Select.Content>
@@ -127,6 +139,8 @@ export default function AddPerson() {
                   onChange={(e) =>
                     setRows((rs) => rs.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))
                   }
+                  aria-label={`URL for link ${i + 1}`}
+                  type="url"
                 />
                 {rows.length > 1 && (
                   <Button

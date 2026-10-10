@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,6 +36,7 @@ import PostCard from '../components/PostCard';
 import DiffBadge from '../components/DiffBadge';
 import CheckNowButton from '../components/CheckNowButton';
 import EmptyState from '../components/EmptyState';
+import { staggerEntrance } from '../lib/animations';
 
 const BLOCKED = new Set(['blocked', 'needs_login', 'rate_limited']);
 const PLATFORMS = ['github', 'x', 'instagram', 'facebook', 'linkedin', 'other'] as Platform[];
@@ -50,9 +51,17 @@ function ManualPasteDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const qc = useQueryClient();
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (open && textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  }, [open]);
+
   const submit = async () => {
     if (!link) return;
     setBusy(true);
@@ -85,6 +94,7 @@ function ManualPasteDialog({
         <TextArea
           mt="3"
           rows={8}
+          ref={textAreaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder='{"profile": {"display_name": "…", "bio": "…"}, "posts": []}'
@@ -266,6 +276,27 @@ export default function PersonDetail() {
   const timeline = useTimeline(id);
   const posts = usePosts(id);
   const { markOne } = useMarkSeen();
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const postsRef = useRef<HTMLDivElement>(null);
+  const checksRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (timeline.data && timelineRef.current) {
+      staggerEntrance('.timeline-item', { stagger: 0.04, y: 8 });
+    }
+  }, [timeline.data]);
+
+  useEffect(() => {
+    if (posts.data && postsRef.current) {
+      staggerEntrance('.post-card', { stagger: 0.04, y: 8 });
+    }
+  }, [posts.data]);
+
+  useEffect(() => {
+    if (checksRef.current) {
+      staggerEntrance('.check-item', { stagger: 0.03, y: 6 });
+    }
+  }, []);
 
   if (person.isPending)
     return (
@@ -307,7 +338,7 @@ export default function PersonDetail() {
         </Tabs.List>
 
         <Tabs.Content value="timeline">
-          <div className="space-y-3">
+          <div className="space-y-3" ref={timelineRef}>
             {timeline.isPending && (
               <>
                 <Skeleton width="100%" height="76px" />
@@ -350,9 +381,9 @@ export default function PersonDetail() {
         </Tabs.Content>
 
         <Tabs.Content value="checks">
-          <div className="space-y-3">
+          <div className="space-y-3" ref={checksRef}>
             {baseline && (
-              <Card size="2" className="border-[var(--green-a6)]">
+              <Card size="2" className="border-[var(--green-a6)] check-item">
                 <div className="flex items-center gap-2">
                   <DiffBadge type="field_change" field="baseline" />
                   <Text size="1" color="gray" className="ml-auto">
@@ -390,7 +421,7 @@ export default function PersonDetail() {
             )}
             <div className="space-y-2">
               {p.links.map((l) => (
-                <LinkRow key={l.id} link={l} />
+                <LinkRow key={l.id} link={l} className="check-item" />
               ))}
             </div>
             {blockedLinks.length > 0 && (
