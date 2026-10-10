@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useRef, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, Badge, Button, Card, Link as RadixLink, Text } from '@radix-ui/themes';
 import type { Person } from '../lib/api';
 import StatusDot from './StatusDot';
+import { cardHover } from '../lib/animations';
 
 function initials(name: string) {
   return name
@@ -24,13 +26,33 @@ export default function PersonCard({
   onCheck: () => void;
   checking: boolean;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const last = person.links
     .map((l) => l.last_checked_at)
     .filter((t): t is string => !!t)
     .sort()
     .pop();
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const handleMouseEnter = () => cardHover(card, true);
+    const handleMouseLeave = () => cardHover(card, false);
+    card.addEventListener('mouseenter', handleMouseEnter);
+    card.addEventListener('mouseleave', handleMouseLeave);
+    return () => {
+      card.removeEventListener('mouseenter', handleMouseEnter);
+      card.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
+
   return (
-    <Card size="2">
+    <Card
+      size="2"
+      className="person-card transition-shadow duration-150 focus-within:ring-2 focus-within:ring-[var(--accent-9)] focus-within:ring-offset-2 focus-within:ring-offset-[var(--color-background)]"
+      ref={cardRef}
+      tabIndex={0}
+    >
       <div className="flex items-center gap-3">
         <Avatar
           src={person.avatar_url ?? undefined}

@@ -16,7 +16,7 @@ export default function TimelineItem({
   return (
     <Card
       size="2"
-      className={fresh ? 'border-[var(--cyan-a6)] bg-[var(--cyan-a2)]' : undefined}
+      className={`${fresh ? 'border-[var(--cyan-a6)] bg-[var(--cyan-a2)]' : ''} timeline-item`}
     >
       <div className="flex items-center gap-2">
         <DiffBadge type={change.type} field={change.field} />

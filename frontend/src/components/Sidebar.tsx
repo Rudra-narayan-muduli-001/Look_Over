@@ -1,7 +1,19 @@
+import { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Badge, Text } from '@radix-ui/themes';
 
 export default function Sidebar({ unseen }: { unseen: number }) {
+  const liveRegionRef = useRef<HTMLDivElement>(null);
+  const prevUnseenRef = useRef(unseen);
+
+  useEffect(() => {
+    if (prevUnseenRef.current !== unseen && liveRegionRef.current) {
+      const message = unseen > 0 ? `${unseen} new alert${unseen > 1 ? 's' : ''}` : 'All alerts seen';
+      liveRegionRef.current.textContent = message;
+      prevUnseenRef.current = unseen;
+    }
+  }, [unseen]);
+
   const link = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-2 rounded-[var(--radius-3)] px-3 py-2 text-sm font-medium transition-colors ${
       isActive
@@ -10,6 +22,7 @@ export default function Sidebar({ unseen }: { unseen: number }) {
     }`;
   return (
     <nav className="border-b border-[var(--gray-a5)] bg-[var(--color-panel-solid)] px-4 py-3 sm:w-60 sm:shrink-0 sm:border-b-0 sm:border-r sm:p-4">
+      <div ref={liveRegionRef} role="status" aria-live="polite" aria-atomic="true" className="sr-only" />
       <Text as="p" size="5" weight="bold" className="mb-3 hidden sm:block">
         Eyes on You
       </Text>

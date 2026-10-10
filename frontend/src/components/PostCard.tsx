@@ -17,7 +17,7 @@ export default function PostCard({ post }: { post: Post }) {
   const [open, setOpen] = useState(false);
   const thumbs = media(post);
   return (
-    <Card size="2">
+    <Card size="2" className="post-card">
       <div className="flex items-center gap-2">
         <Badge color="gray" variant="soft">
           {post.platform}

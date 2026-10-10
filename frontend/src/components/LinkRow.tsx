@@ -2,9 +2,9 @@ import { Avatar, Card, Text } from '@radix-ui/themes';
 import type { ProfileLink } from '../lib/api';
 import StatusDot from './StatusDot';
 
-export default function LinkRow({ link }: { link: ProfileLink }) {
+export default function LinkRow({ link, className }: { link: ProfileLink; className?: string }) {
   return (
-    <Card size="1">
+    <Card size="1" className={className}>
       <div className="flex items-center gap-3">
         <Avatar
           fallback={(link.platform[0] ?? '?').toUpperCase()}
