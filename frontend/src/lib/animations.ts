@@ -3,6 +3,10 @@ import { gsap } from 'gsap';
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+function toPromise(tween: gsap.core.Tween | gsap.core.Timeline) {
+  return new Promise<void>((resolve) => tween.eventCallback('onComplete', resolve));
+}
+
 export function staggerEntrance(
   selector: string,
   options: {
@@ -27,8 +31,8 @@ export function staggerEntrance(
     from = 'start',
   } = options;
 
-  return gsap
-    .from(selector, {
+  return toPromise(
+    gsap.from(selector, {
       opacity,
       y,
       duration,
@@ -36,7 +40,7 @@ export function staggerEntrance(
       ease,
       clearProps: 'all',
     })
-    .promise();
+  );
 }
 
 export function fadeIn(
@@ -49,9 +53,7 @@ export function fadeIn(
   }
   const { duration = 0.2, delay = 0, ease = 'power1.out' } = options;
 
-  return gsap
-    .from(selector, { opacity: 0, duration, delay, ease, clearProps: 'all' })
-    .promise();
+  return toPromise(gsap.from(selector, { opacity: 0, duration, delay, ease, clearProps: 'all' }));
 }
 
 export function slideIn(
@@ -71,9 +73,7 @@ export function slideIn(
   const x = direction === 'left' ? -20 : direction === 'right' ? 20 : 0;
   const y = direction === 'up' ? 20 : direction === 'down' ? -20 : 0;
 
-  return gsap
-    .from(selector, { opacity: 0, x, y, duration, delay, ease, clearProps: 'all' })
-    .promise();
+  return toPromise(gsap.from(selector, { opacity: 0, x, y, duration, delay, ease, clearProps: 'all' }));
 }
 
 export function scaleIn(
@@ -86,9 +86,7 @@ export function scaleIn(
   }
   const { duration = 0.2, delay = 0, ease = 'back.out(1.4)', from = 0.92 } = options;
 
-  return gsap
-    .from(selector, { opacity: 0, scale: from, duration, delay, ease, clearProps: 'all' })
-    .promise();
+  return toPromise(gsap.from(selector, { opacity: 0, scale: from, duration, delay, ease, clearProps: 'all' }));
 }
 
 export function modalEntrance(
@@ -106,7 +104,7 @@ export function modalEntrance(
       { opacity: 0, scale: 0.95, y: 8, duration: 0.2, ease: 'back.out(1.4)' },
       '-=0.1'
     );
-  return tl.promise();
+  return toPromise(tl);
 }
 
 export function modalExit(
@@ -120,7 +118,7 @@ export function modalExit(
   const tl = gsap.timeline();
   tl.to(contentSelector, { opacity: 0, scale: 0.95, y: -8, duration: 0.15, ease: 'power1.in' })
     .to(overlaySelector, { opacity: 0, duration: 0.1, ease: 'power1.in' }, '-=0.1');
-  return tl.promise();
+  return toPromise(tl);
 }
 
 export function toastEntrance(selector: string) {
@@ -128,19 +126,15 @@ export function toastEntrance(selector: string) {
     gsap.set(selector, { opacity: 1, x: 0 });
     return Promise.resolve();
   }
-  return gsap
-    .from(selector, { opacity: 0, x: 30, duration: 0.3, ease: 'back.out(1.4)', clearProps: 'all' })
-    .promise();
+  return toPromise(gsap.from(selector, { opacity: 0, x: 30, duration: 0.3, ease: 'back.out(1.4)', clearProps: 'all' }));
 }
 
 export function badgePulse(selector: string) {
   if (prefersReducedMotion()) return Promise.resolve();
-  return gsap
-    .to(selector, { scale: 1.1, duration: 0.15, yoyo: true, repeat: 1, ease: 'power1.out' })
-    .promise();
+  return toPromise(gsap.to(selector, { scale: 1.1, duration: 0.15, yoyo: true, repeat: 1, ease: 'power1.out' }));
 }
 
-export function cardHover(selector: string, isEnter: boolean) {
+export function cardHover(selector: string | Element, isEnter: boolean) {
   if (prefersReducedMotion()) return;
   gsap.to(selector, {
     y: isEnter ? -2 : 0,
@@ -150,7 +144,7 @@ export function cardHover(selector: string, isEnter: boolean) {
   });
 }
 
-export function buttonPress(selector: string, isPress: boolean) {
+export function buttonPress(selector: string | Element, isPress: boolean) {
   if (prefersReducedMotion()) return;
   gsap.to(selector, {
     scale: isPress ? 0.97 : 1,
