@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.link import LinkOut
+
 
 class PersonCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
@@ -24,3 +26,4 @@ class PersonOut(BaseModel):
     avatar_url: str | None = None
     check_interval_hours: int
     created_at: datetime
+    links: list[LinkOut] = []
