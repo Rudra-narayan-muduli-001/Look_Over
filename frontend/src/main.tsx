@@ -5,10 +5,14 @@ import { Theme } from '@radix-ui/themes';
 import '@radix-ui/themes/styles.css';
 import './index.css';
 import App from './App.tsx';
+import { initLenis } from './lenis';
+import './gsap-lenis';
 
 const qc = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
+
+initLenis();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
