@@ -15,7 +15,8 @@ export default function Dashboard() {
   const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (persons.data.length > 0 && gridRef.current) {
+    const data = persons.data;
+    if (data && data.length > 0 && gridRef.current) {
       staggerEntrance('.person-card', { stagger: 0.04, y: 12 });
     }
   }, [persons.data]);
@@ -56,7 +57,7 @@ export default function Dashboard() {
         }
       />
     );
-  if (persons.data.length === 0)
+  if (!persons.data || persons.data.length === 0)
     return (
       <EmptyState
         title="No persons yet"
