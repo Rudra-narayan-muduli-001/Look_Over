@@ -1,65 +1,35 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Button, Skeleton } from '@radix-ui/themes';
-import { health } from './lib/api';
-import { useAlerts } from './hooks/useAlerts';
-import Sidebar from './components/Sidebar';
-import EmptyState from './components/EmptyState';
-import Dashboard from './pages/Dashboard';
-import PersonDetail from './pages/PersonDetail';
-import AddPerson from './pages/AddPerson';
-import Alerts from './pages/Alerts';
+import { Layout } from '@/components/layout/Layout';
+import { Landing } from '@/pages/Landing';
 
 function Shell() {
-  const alerts = useAlerts();
-  const total = alerts.data?.length ?? 0;
   return (
-    <div className="flex min-h-[100dvh] flex-col sm:flex-row">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--accent-9)] focus:text-[var(--accent-11)] focus:rounded-[var(--radius-3)]">
-        Skip to main content
-      </a>
-      <Sidebar unseen={total} />
-      <main id="main-content" className="flex-1 p-4 sm:p-6">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/persons/:id" element={<PersonDetail />} />
-          <Route path="/new" element={<AddPerson />} />
-          <Route path="/alerts" element={<Alerts />} />
-        </Routes>
-      </main>
-    </div>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<div className="min-h-[100dvh] flex items-center justify-center">Login page coming soon</div>} />
+        <Route path="/signup" element={<div className="min-h-[100dvh] flex items-center justify-center">Signup page coming soon</div>} />
+        <Route path="/docs" element={<div className="min-h-[100dvh] flex items-center justify-center">Docs page coming soon</div>} />
+        <Route path="/changelog" element={<div className="min-h-[100dvh] flex items-center justify-center">Changelog page coming soon</div>} />
+        <Route path="/about" element={<div className="min-h-[100dvh] flex items-center justify-center">About page coming soon</div>} />
+        <Route path="/blog" element={<div className="min-h-[100dvh] flex items-center justify-center">Blog page coming soon</div>} />
+        <Route path="/careers" element={<div className="min-h-[100dvh] flex items-center justify-center">Careers page coming soon</div>} />
+        <Route path="/press" element={<div className="min-h-[100dvh] flex items-center justify-center">Press page coming soon</div>} />
+        <Route path="/contact" element={<div className="min-h-[100dvh] flex items-center justify-center">Contact page coming soon</div>} />
+        <Route path="/community" element={<div className="min-h-[100dvh] flex items-center justify-center">Community page coming soon</div>} />
+        <Route path="/help" element={<div className="min-h-[100dvh] flex items-center justify-center">Help page coming soon</div>} />
+        <Route path="/api-docs" element={<div className="min-h-[100dvh] flex items-center justify-center">API Docs page coming soon</div>} />
+        <Route path="/status" element={<div className="min-h-[100dvh] flex items-center justify-center">Status page coming soon</div>} />
+        <Route path="/security" element={<div className="min-h-[100dvh] flex items-center justify-center">Security page coming soon</div>} />
+        <Route path="/privacy" element={<div className="min-h-[100dvh] flex items-center justify-center">Privacy page coming soon</div>} />
+        <Route path="/terms" element={<div className="min-h-[100dvh] flex items-center justify-center">Terms page coming soon</div>} />
+        <Route path="/cookies" element={<div className="min-h-[100dvh] flex items-center justify-center">Cookies page coming soon</div>} />
+      </Routes>
+    </Layout>
   );
 }
 
 export default function App() {
-  const gate = useQuery({
-    queryKey: ['health'],
-    queryFn: health,
-    retry: 1,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-  });
-
-  if (gate.isPending)
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center p-4">
-        <Skeleton width="220px" height="44px" />
-      </div>
-    );
-  if (gate.isError && !gate.data)
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <EmptyState
-            title="API is down"
-            hint="Start the backend on http://localhost:8000, then retry."
-            tone="danger"
-            action={<Button onClick={() => gate.refetch()}>Retry</Button>}
-          />
-        </div>
-      </div>
-    );
-
   return (
     <BrowserRouter>
       <Shell />
